@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/derin/tri/glad.h
+KHR/khrplatform.h
+-
+
+/home/derin/tri/main.cpp
+glad.h
+/home/derin/tri/glad.h
+GLFW/glfw3.h
+-
+

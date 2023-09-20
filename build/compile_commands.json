@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/derin/tri/build",
+  "command": "/usr/bin/gcc   -g   -o CMakeFiles/tri.dir/glad.c.o   -c /home/derin/tri/glad.c",
+  "file": "/home/derin/tri/glad.c"
+},
+{
+  "directory": "/home/derin/tri/build",
+  "command": "/usr/bin/g++    -g   -o CMakeFiles/tri.dir/main.cpp.o -c /home/derin/tri/main.cpp",
+  "file": "/home/derin/tri/main.cpp"
+}
+]

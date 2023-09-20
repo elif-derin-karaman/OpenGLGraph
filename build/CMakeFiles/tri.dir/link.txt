@@ -1,0 +1,1 @@
+/usr/bin/g++  -g   CMakeFiles/tri.dir/glad.c.o CMakeFiles/tri.dir/main.cpp.o  -o tri  -lGL -ldl -lglfw 

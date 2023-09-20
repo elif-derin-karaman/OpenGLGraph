@@ -1,0 +1,3 @@
+/home/derin/tri/build/CMakeFiles/rebuild_cache.dir
+/home/derin/tri/build/CMakeFiles/edit_cache.dir
+/home/derin/tri/build/CMakeFiles/tri.dir
