@@ -26,7 +26,6 @@ void init(){
     glMatrixMode( GL_PROJECTION );
     glOrtho( 0, 99.0, -30, 30, -1, 1 );
     
-
 }
 
 void display(){
@@ -55,4 +54,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-//g++ -o graph2 graph2.cpp -lglfw -lGL -lglut
