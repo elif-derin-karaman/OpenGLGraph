@@ -5,11 +5,14 @@
 #include <GL/glut.h>
 #include <GLFW/glfw3.h>
 
+#define PLOT_Y_MARGIN 10.0
 #define SAMPLE_QUANTITY 1000
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
+#define GRID_X_INTERVAL 1
+#define GRID_Y_INTERVAL 1
 #define X_LENGTH 10.0
-#define X_SCALE 2
+#define X_SCALE 1.0
 #define Y_SCALE 1.0
 
 struct Point {
@@ -27,31 +30,28 @@ public:
     Plotter(int argc, char **argv, float(*function_in)(const float));
 private:
     static std::vector<Point> samplePoints;
-    std::array<float, 2> getYLimits(const std::vector<Point> &points_in);
+    static float getMinY();
+    static float getMaxY();
+    static void drawLine(float x1, float y1,
+                         float x2, float y2,
+                         float r,  float g,
+                         float b,  float thickness);
+    static void drawPlot();
+    static void drawGrid();
+    static void drawNumerals();
+    static void drawNumber(float x, float y, float number, float r, float g, float b);
+    static void drawLoopOpenGL();
     static void initializeOpenGL();
-    static void displayOpenGL();
 };
 
 std::vector<Point> Plotter::samplePoints;
-
-std::array<float, 2> Plotter::getYLimits(const std::vector<Point> &points_in) {
-    float maximum = 0.0,
-          minimum = 0.0;
-    for (std::vector<Point>::const_iterator it = points_in.begin(); it < points_in.end(); it++) {
-        maximum = it->y > maximum ? it->y : maximum;
-        minimum = it->y < minimum ? it->y : minimum;
-    }
-    return std::array<float, 2>({maximum, minimum});
-}
 
 Plotter::Plotter(int argc, char **argv, float(*function_in)(const float)) {
     /* Initialize the sampled points. */
     samplePoints.resize(SAMPLE_QUANTITY);
     for (int x = 0; x < SAMPLE_QUANTITY; x++) {
         samplePoints[x] = Point(x, function_in);
-	}
-    std::array<float, 2> y_lims = getYLimits(samplePoints);
-
+    }
     /* Initialize new window. */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
@@ -62,23 +62,124 @@ Plotter::Plotter(int argc, char **argv, float(*function_in)(const float)) {
     /* Setup OpenGL parameters*/
     glClear( GL_COLOR_BUFFER_BIT );
     glMatrixMode( GL_PROJECTION );
-    glOrtho(0, SAMPLE_QUANTITY, y_lims[1] - 10, y_lims[0] + 10, -1, 1);
+    glOrtho(0, SAMPLE_QUANTITY, getMinY() - PLOT_Y_MARGIN, getMaxY() + PLOT_Y_MARGIN, -1, 1);
     //glOrtho(0, SAMPLE_QUANTITY, -30, 30, -1, 1);
 
     /* Input the OpenGL render function and run the render loop.*/
-    glutDisplayFunc(Plotter::displayOpenGL);
+    glutDisplayFunc(Plotter::drawLoopOpenGL);
     glutMainLoop();
 }
 
-void Plotter::displayOpenGL() {
-    glClear(GL_COLOR_BUFFER_BIT);
+float Plotter::getMaxY() {
+    float maximum = samplePoints[0].y;
+    for (std::vector<Point>::const_iterator it = Plotter::samplePoints.begin(); it < Plotter::samplePoints.end(); it++) {
+        maximum = it->y > maximum ? it->y : maximum;
+    }
+    return maximum;
+}
+
+float Plotter::getMinY() {
+    float minimum = samplePoints[0].y;
+    for (std::vector<Point>::const_iterator it = Plotter::samplePoints.begin(); it < Plotter::samplePoints.end(); it++) {
+        minimum = it->y > minimum ? it->y : minimum;
+    }
+    return minimum;
+}
+
+void Plotter::drawLine(float x1, float y1,
+                       float x2, float y2,
+                       float r,  float g,
+                       float b,  float thickness) {
+    glLineWidth(thickness);
+    glColor3f(r, g, b);
     glBegin(GL_LINE_STRIP);
-        
+    glVertex2f(x1, y1);
+    glVertex2f(x2, y2);
+    glEnd();
+}
+
+void Plotter::drawPlot() {
+    glLineWidth(1);
+    glColor3f(255, 255, 255);
+    glBegin(GL_LINE_STRIP);
     for (std::vector<Point>::iterator it = samplePoints.begin(); it < samplePoints.end(); it++) {
         glVertex2f(it->x, it->y);
     }
-
     glEnd();
+}
+
+void Plotter::drawGrid() {
+    float left = 0.0;
+    float right = SAMPLE_QUANTITY;
+    float top = getMaxY() + PLOT_Y_MARGIN;
+    float bot = getMinY() - PLOT_Y_MARGIN;
+
+    /* Draw sub-axes for X*/
+    float x_pen = 0.0,
+          y_pen = 0.0;
+
+    while (x_pen < right) {
+        drawLine(0 + x_pen, bot, 0 + x_pen, top, 0.2, 0.2, 0.2, 1);
+        drawLine(0 - x_pen, bot, 0 - x_pen, top, 0.2, 0.2, 0.2, 1);
+        x_pen += GRID_X_INTERVAL*SAMPLE_QUANTITY/X_LENGTH;
+        
+    }
+    while (y_pen < top) {
+        drawLine(left, 0 + y_pen, right, 0 + y_pen, 0.2, 0.2, 0.2, 1);
+        drawLine(left, 0 - y_pen, right, 0 - y_pen, 0.2, 0.2, 0.2, 1);
+        y_pen += GRID_Y_INTERVAL;
+    }
+
+    /* Draw the X and Y axes*/
+    drawLine(SAMPLE_QUANTITY/2, top,
+             SAMPLE_QUANTITY/2, bot, 0.2, 0.2, 0.2, 1);
+    drawLine(0, 0, right, 0, 0.2, 0.2, 0.2, 1);
+
+}
+
+void Plotter::drawNumerals() {
+    float left = 0.0;
+    float right = SAMPLE_QUANTITY;
+    float top = getMaxY() + PLOT_Y_MARGIN;
+    float bot = getMinY() - PLOT_Y_MARGIN;
+
+    /* Draw the numeral indicators. */
+    float x_pen = 0.0,
+          y_pen = 0.0;
+    int x_num = 0;
+
+    while (x_pen < right) {
+        drawNumber(SAMPLE_QUANTITY/2 + x_pen, 0, GRID_X_INTERVAL*x_num, 1.0, 0.8, 0.5);
+        drawNumber(SAMPLE_QUANTITY/2 - x_pen, 0, GRID_X_INTERVAL*x_num, 1.0, 0.8, 0.5);
+        x_pen += GRID_X_INTERVAL*SAMPLE_QUANTITY/X_LENGTH;
+        x_num++;
+        
+    }
+    while (y_pen < top) {
+        drawNumber(0, 0 + y_pen, y_pen, 1.0, 0.8, 0.5);
+        drawNumber(0, 0 - y_pen, y_pen, 1.0, 0.8, 0.5);
+        y_pen += GRID_Y_INTERVAL;
+    }
+
+}
+
+void Plotter::drawNumber(float x, float y, float number, float r, float g, float b) {
+    std::string numString = std::to_string(number);
+    glColor3f(r, g, b);
+    glRasterPos2f(x, y);
+    if (number < 0.0) {
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13, '-');
+    }
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, numString[0]);
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, numString[1]);
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, numString[2]);
+}
+
+void Plotter::drawLoopOpenGL() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    drawGrid();
+    drawPlot();
+    drawNumerals();
     glFlush();
 }
 
