@@ -11,9 +11,9 @@
 #define SCREEN_HEIGHT 480
 #define GRID_X_INTERVAL 1
 #define GRID_Y_INTERVAL 1
-#define X_LENGTH 10.0
-#define X_SCALE 1.0
-#define Y_SCALE 1.0
+#define X_LENGTH 30
+#define X_SCALE 2.0
+#define Y_SCALE 2.0
 
 struct Point {
     float x;
@@ -21,7 +21,7 @@ struct Point {
     Point() : x(0.0f), y(0.0f) {}
     Point(float x_in, float(*function_in)(const float)) {
         x = x_in;
-        y = function_in(((x_in*X_LENGTH/SAMPLE_QUANTITY) - X_LENGTH/2)*X_SCALE)*Y_SCALE; 
+        y = function_in(((x_in*X_LENGTH/SAMPLE_QUANTITY) - X_LENGTH/2)/X_SCALE)*Y_SCALE; 
     }
 };
 
@@ -40,6 +40,7 @@ private:
     static void drawGrid();
     static void drawNumerals();
     static void drawNumber(float x, float y, float number, float r, float g, float b);
+    static void updatePlot();
     static void drawLoopOpenGL();
     static void initializeOpenGL();
 };
@@ -99,8 +100,8 @@ void Plotter::drawLine(float x1, float y1,
 }
 
 void Plotter::drawPlot() {
-    glLineWidth(1);
-    glColor3f(255, 255, 255);
+    glLineWidth(3);
+    glColor3f(0.9, 0.1, 0.1);
     glBegin(GL_LINE_STRIP);
     for (std::vector<Point>::iterator it = samplePoints.begin(); it < samplePoints.end(); it++) {
         glVertex2f(it->x, it->y);
@@ -132,8 +133,8 @@ void Plotter::drawGrid() {
 
     /* Draw the X and Y axes*/
     drawLine(SAMPLE_QUANTITY/2, top,
-             SAMPLE_QUANTITY/2, bot, 0.2, 0.2, 0.2, 1);
-    drawLine(0, 0, right, 0, 0.2, 0.2, 0.2, 1);
+             SAMPLE_QUANTITY/2, bot, 0.3, 0.3, 0.3, 2);
+    drawLine(0, 0, right, 0, 0.3, 0.3, 0.3, 2);
 
 }
 
@@ -184,7 +185,12 @@ void Plotter::drawLoopOpenGL() {
 }
 
 float arbitraryFunction(const float x_in) {
-    return exp(-1.0*pow(x_in, 2.0));
+    if (x_in > 1.8 | x_in < -1.8) {
+        return 0.0;
+    }
+
+    float y_out = pow(pow(x_in, 2), 1.0/3.0) + 0.9*pow(3.3 - pow(x_in, 2), 1.0/2.0)*sin(10*M_PI*x_in);
+    return y_out;
 }
 
 int main(int argc, char **argv) {
