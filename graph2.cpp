@@ -40,7 +40,6 @@ private:
     static void drawGrid();
     static void drawNumerals();
     static void drawNumber(float x, float y, float number, float r, float g, float b);
-    static void updatePlot();
     static void drawLoopOpenGL();
     static void initializeOpenGL();
 };
